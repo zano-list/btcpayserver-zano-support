@@ -1,8 +1,8 @@
-namespace BTCPayServer.Plugins.Zano.Payments
+namespace Zano.Payments
 {
     public class ZanoPaymentPromptDetails
     {
-        public string AccountAddress { get; set; }
+        public long AccountAddress { get; set; }
         public long? InvoiceSettledConfirmationThreshold { get; set; }
     }
 }

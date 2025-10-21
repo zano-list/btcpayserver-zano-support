@@ -7,12 +7,11 @@
     <Version>1.0.1</Version>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetsEnabled>true</StaticWebAssetsEnabled>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
     <PreserveCompilationContext>false</PreserveCompilationContext>
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
-    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
 
   <!-- This will make sure that referencing BTCPayServer doesn't put any artifact in the published directory -->
@@ -26,27 +25,29 @@
 
   <!-- Deterministic build -->
   <ItemGroup>
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25" PrivateAssets="All" />
+    <PackageReference Include="DotNet.ReproducibleBuilds.Isolated" Version="1.2.25" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="BTCPayServer.Plugins.Zano.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="zano.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="zano.svg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\submodules\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
   </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\**\*" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="zano.png">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	</ItemGroup>
 </Project>

@@ -2,7 +2,7 @@ using System;
 
 using BTCPayServer.Payments;
 
-namespace BTCPayServer.Plugins.Zano.ViewModels
+namespace Zano.ViewModels
 {
     public class ZanoPaymentViewModel
     {

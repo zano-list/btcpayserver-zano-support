@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 using Newtonsoft.Json;
 
-namespace BTCPayServer.Plugins.Zano.RPC.Models
+namespace Zano.RPC.Models
 {
     public partial class TransferDestination
     {

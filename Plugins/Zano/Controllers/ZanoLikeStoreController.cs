@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,10 +11,10 @@ using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Client;
 using BTCPayServer.Data;
 using BTCPayServer.Payments;
-using BTCPayServer.Plugins.Zano.Configuration;
-using BTCPayServer.Plugins.Zano.Payments;
-using BTCPayServer.Plugins.Zano.RPC.Models;
-using BTCPayServer.Plugins.Zano.Services;
+using Zano.Configuration;
+using Zano.Payments;
+using Zano.RPC.Models;
+using Zano.Services;
 using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
 
@@ -25,8 +23,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Localization;
+using BTCPayServer;
 
-namespace BTCPayServer.Plugins.Zano.Controllers
+namespace Zano.Controllers
 {
     [Route("stores/{storeId}/zanolike")]
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie)]
@@ -72,23 +71,23 @@ namespace BTCPayServer.Plugins.Zano.Controllers
             };
         }
 
-        //private Task<GetAccountsResponse> GetAccounts(string cryptoCode)
-        //{
-        //    try
-        //    {
-        //        if (_ZanoRpcProvider.Summaries.TryGetValue(cryptoCode, out var summary) && summary.WalletAvailable)
-        //        {
+        private Task<GetAccountsResponse> GetAccounts(string cryptoCode)
+        {
+            try
+            {
+                if (_ZanoRpcProvider.Summaries.TryGetValue(cryptoCode, out var summary) && summary.WalletAvailable)
+                {
 
-        //            return _ZanoRpcProvider.WalletRpcClients[cryptoCode].SendCommandAsync<GetAccountsRequest, GetAccountsResponse>("getbalance", new GetAccountsRequest());
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        // ignored
-        //    }
+                    return _ZanoRpcProvider.WalletRpcClients[cryptoCode].SendCommandAsync<GetAccountsRequest, GetAccountsResponse>("getbalance", new GetAccountsRequest());
+                }
+            }
+            catch
+            {
+                // ignored
+            }
 
-        //    return Task.FromResult<GetAccountsResponse>(null);
-        //}
+            return Task.FromResult<GetAccountsResponse>(null);
+        }
 
         private ZanoLikePaymentMethodViewModel GetZanoLikePaymentMethodViewModel(
             StoreData storeData, string cryptoCode,
@@ -157,38 +156,38 @@ namespace BTCPayServer.Plugins.Zano.Controllers
                 return NotFound();
             }
 
-            //if (command == "add-account")
-            //{
-            //    try
-            //    {
-            //        var newAccount = await _ZanoRpcProvider.WalletRpcClients[cryptoCode].SendCommandAsync<CreateAccountRequest, CreateAccountResponse>("create_account", new CreateAccountRequest()
-            //        {
-            //            Label = viewModel.NewAccountLabel
-            //        });
-            //        viewModel.AccountIndex = newAccount.AccountIndex;
-            //    }
-            //    catch (Exception)
-            //    {
-            //        ModelState.AddModelError(nameof(viewModel.AccountIndex), StringLocalizer["Could not create a new account."]);
-            //    }
+            if (command == "add-account")
+            {
+                try
+                {
+                    var newAccount = await _ZanoRpcProvider.WalletRpcClients[cryptoCode].SendCommandAsync<CreateAccountRequest, CreateAccountResponse>("create_account", new CreateAccountRequest()
+                    {
+                        Label = viewModel.NewAccountLabel
+                    });
+                    viewModel.AccountIndex = newAccount.AccountIndex;
+                }
+                catch (Exception)
+                {
+                    ModelState.AddModelError(nameof(viewModel.AccountIndex), StringLocalizer["Could not create a new account."]);
+                }
 
-            //}
-            else if (command == "upload-wallet")
+            }
+            else if (command == "set-wallet-details")
             {
                 var valid = true;
-                if (viewModel.WalletFile == null)
+                if (viewModel.PrimaryAddress == null)
                 {
-                    ModelState.AddModelError(nameof(viewModel.WalletFile), StringLocalizer["Please select the view-only wallet file"]);
+                    ModelState.AddModelError(nameof(viewModel.PrimaryAddress), StringLocalizer["Please set your primary public address"]);
                     valid = false;
                 }
-                if (viewModel.WalletKeysFile == null)
+                if (viewModel.PrivateViewKey == null)
                 {
-                    ModelState.AddModelError(nameof(viewModel.WalletKeysFile), StringLocalizer["Please select the view-only wallet keys file"]);
+                    ModelState.AddModelError(nameof(viewModel.PrivateViewKey), StringLocalizer["Please set your private view key"]);
                     valid = false;
                 }
                 if (configurationItem.WalletDirectory == null)
                 {
-                    ModelState.AddModelError(nameof(viewModel.WalletFile), StringLocalizer["This installation doesn't support wallet import (BTCPAY_XMR_WALLET_DAEMON_WALLETDIR is not set)"]);
+                    ModelState.AddModelError(nameof(viewModel.PrimaryAddress), StringLocalizer["This installation doesn't support wallet creation (BTCPAY_XMR_WALLET_DAEMON_WALLETDIR is not set)"]);
                     valid = false;
                 }
                 if (valid)
@@ -206,75 +205,137 @@ namespace BTCPayServer.Plugins.Zano.Controllers
                                 new { cryptoCode });
                         }
                     }
-
-                    var fileAddress = Path.Combine(configurationItem.WalletDirectory, "wallet");
-                    using (var fileStream = new FileStream(fileAddress, FileMode.Create))
-                    {
-                        await viewModel.WalletFile.CopyToAsync(fileStream);
-                        try
-                        {
-                            Exec($"chmod 666 {fileAddress}");
-                        }
-                        catch
-                        {
-                            // ignored
-                        }
-                    }
-
-                    fileAddress = Path.Combine(configurationItem.WalletDirectory, "wallet.keys");
-                    using (var fileStream = new FileStream(fileAddress, FileMode.Create))
-                    {
-                        await viewModel.WalletKeysFile.CopyToAsync(fileStream);
-                        try
-                        {
-                            Exec($"chmod 666 {fileAddress}");
-                        }
-                        catch
-                        {
-                            // ignored
-                        }
-                    }
-
-                    fileAddress = Path.Combine(configurationItem.WalletDirectory, "password");
-                    using (var fileStream = new StreamWriter(fileAddress, false))
-                    {
-                        await fileStream.WriteAsync(viewModel.WalletPassword);
-                        try
-                        {
-                            Exec($"chmod 666 {fileAddress}");
-                        }
-                        catch
-                        {
-                            // ignored
-                        }
-                    }
-
                     try
                     {
-                        //var response = await _ZanoRpcProvider.WalletRpcClients[cryptoCode].SendCommandAsync<OpenWalletRequest, OpenWalletResponse>("open_wallet", new OpenWalletRequest
-                        //{
-                        //    Filename = "wallet",
-                        //    Password = viewModel.WalletPassword
-                        //});
-                        //if (response?.Error != null)
-                        //{
-                        //    throw new WalletOpenException(response.Error.Message);
-                        //}
+                        var response = await _ZanoRpcProvider.WalletRpcClients[cryptoCode].SendCommandAsync<GenerateFromKeysRequest, GenerateFromKeysResponse>("generate_from_keys", new GenerateFromKeysRequest
+                        {
+                            PrimaryAddress = viewModel.PrimaryAddress,
+                            PrivateViewKey = viewModel.PrivateViewKey,
+                            WalletFileName = "view_wallet",
+                            RestoreHeight = viewModel.RestoreHeight,
+                            Password = viewModel.WalletPassword
+                        });
+                        if (response?.Error != null)
+                        {
+                            throw new GenerateFromKeysException(response.Error.Message);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        ModelState.AddModelError(nameof(viewModel.AccountIndex), StringLocalizer["Could not open the wallet: {0}", ex.Message]);
+                        ModelState.AddModelError(nameof(viewModel.AccountIndex), StringLocalizer["Could not generate view wallet from keys: {0}", ex.Message]);
                         return View("/Views/Zano/GetStoreZanoLikePaymentMethod.cshtml", viewModel);
                     }
 
                     TempData.SetStatusMessageModel(new StatusMessageModel
                     {
                         Severity = StatusMessageModel.StatusSeverity.Info,
-                        Message = StringLocalizer["View-only wallet files uploaded. The wallet will soon become available."].Value
+                        Message = StringLocalizer["View-only wallet created. The wallet will soon become available."].Value
                     });
                     return RedirectToAction(nameof(GetStoreZanoLikePaymentMethod), new { cryptoCode });
                 }
             }
+            //else if (command == "upload-wallet")
+            //{
+            //    var valid = true;
+            //    if (viewModel.WalletFile == null)
+            //    {
+            //        ModelState.AddModelError(nameof(viewModel.WalletFile), StringLocalizer["Please select the view-only wallet file"]);
+            //        valid = false;
+            //    }
+            //    if (viewModel.WalletKeysFile == null)
+            //    {
+            //        ModelState.AddModelError(nameof(viewModel.WalletKeysFile), StringLocalizer["Please select the view-only wallet keys file"]);
+            //        valid = false;
+            //    }
+            //    if (configurationItem.WalletDirectory == null)
+            //    {
+            //        ModelState.AddModelError(nameof(viewModel.WalletFile), StringLocalizer["This installation doesn't support wallet import (BTCPAY_XMR_WALLET_DAEMON_WALLETDIR is not set)"]);
+            //        valid = false;
+            //    }
+            //    if (valid)
+            //    {
+            //        if (_ZanoRpcProvider.Summaries.TryGetValue(cryptoCode, out var summary))
+            //        {
+            //            if (summary.WalletAvailable)
+            //            {
+            //                TempData.SetStatusMessageModel(new StatusMessageModel
+            //                {
+            //                    Severity = StatusMessageModel.StatusSeverity.Error,
+            //                    Message = StringLocalizer["There is already an active wallet configured for {0}. Replacing it would break any existing invoices!", cryptoCode].Value
+            //                });
+            //                return RedirectToAction(nameof(GetStoreZanoLikePaymentMethod),
+            //                    new { cryptoCode });
+            //            }
+            //        }
+
+            //        var fileAddress = Path.Combine(configurationItem.WalletDirectory, "wallet");
+            //        using (var fileStream = new FileStream(fileAddress, FileMode.Create))
+            //        {
+            //            await viewModel.WalletFile.CopyToAsync(fileStream);
+            //            try
+            //            {
+            //                Exec($"chmod 666 {fileAddress}");
+            //            }
+            //            catch
+            //            {
+            //                // ignored
+            //            }
+            //        }
+
+            //        fileAddress = Path.Combine(configurationItem.WalletDirectory, "wallet.keys");
+            //        using (var fileStream = new FileStream(fileAddress, FileMode.Create))
+            //        {
+            //            await viewModel.WalletKeysFile.CopyToAsync(fileStream);
+            //            try
+            //            {
+            //                Exec($"chmod 666 {fileAddress}");
+            //            }
+            //            catch
+            //            {
+            //                // ignored
+            //            }
+            //        }
+
+            //        fileAddress = Path.Combine(configurationItem.WalletDirectory, "password");
+            //        using (var fileStream = new StreamWriter(fileAddress, false))
+            //        {
+            //            await fileStream.WriteAsync(viewModel.WalletPassword);
+            //            try
+            //            {
+            //                Exec($"chmod 666 {fileAddress}");
+            //            }
+            //            catch
+            //            {
+            //                // ignored
+            //            }
+            //        }
+
+            //        try
+            //        {
+            //            //var response = await _ZanoRpcProvider.WalletRpcClients[cryptoCode].SendCommandAsync<OpenWalletRequest, OpenWalletResponse>("open_wallet", new OpenWalletRequest
+            //            //{
+            //            //    Filename = "wallet",
+            //            //    Password = viewModel.WalletPassword
+            //            //});
+            //            //if (response?.Error != null)
+            //            //{
+            //            //    throw new WalletOpenException(response.Error.Message);
+            //            //}
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            ModelState.AddModelError(nameof(viewModel.AccountIndex), StringLocalizer["Could not open the wallet: {0}", ex.Message]);
+            //            return View("/Views/Zano/GetStoreZanoLikePaymentMethod.cshtml", viewModel);
+            //        }
+
+            //        TempData.SetStatusMessageModel(new StatusMessageModel
+            //        {
+            //            Severity = StatusMessageModel.StatusSeverity.Info,
+            //            Message = StringLocalizer["View-only wallet files uploaded. The wallet will soon become available."].Value
+            //        });
+            //        return RedirectToAction(nameof(GetStoreZanoLikePaymentMethod), new { cryptoCode });
+            //    }
+            //}
 
             if (!ModelState.IsValid)
             {
@@ -285,7 +346,7 @@ namespace BTCPayServer.Plugins.Zano.Controllers
                 vm.Enabled = viewModel.Enabled;
                 vm.SettlementConfirmationThresholdChoice = viewModel.SettlementConfirmationThresholdChoice;
                 vm.CustomSettlementConfirmationThreshold = viewModel.CustomSettlementConfirmationThreshold;
-                vm.SupportWalletExport = configurationItem.WalletDirectory is not null;
+                //vm.SupportWalletExport = configurationItem.WalletDirectory is not null;
                 return View("/Views/Zano/GetStoreZanoLikePaymentMethod.cshtml", vm);
             }
 
@@ -343,18 +404,19 @@ namespace BTCPayServer.Plugins.Zano.Controllers
         public class ZanoLikePaymentMethodViewModel : IValidatableObject
         {
             public ZanoRPCProvider.ZanoLikeSummary Summary { get; set; }
-            public bool SupportWalletExport { get; set; }
             public string CryptoCode { get; set; }
             public string NewAccountLabel { get; set; }
-            public string AccountIndex { get; set; }
+            public long AccountIndex { get; set; }
             public bool Enabled { get; set; }
 
             public IEnumerable<SelectListItem> Accounts { get; set; }
             public bool WalletFileFound { get; set; }
-            [Display(Name = "View-Only Wallet File")]
-            public IFormFile WalletFile { get; set; }
-            [Display(Name = "Wallet Keys File")]
-            public IFormFile WalletKeysFile { get; set; }
+            [Display(Name = "Primary Public Address")]
+            public string PrimaryAddress { get; set; }
+            [Display(Name = "Private View Key")]
+            public string PrivateViewKey { get; set; }
+            [Display(Name = "Restore Height")]
+            public int RestoreHeight { get; set; }
             [Display(Name = "Wallet Password")]
             public string WalletPassword { get; set; }
             [Display(Name = "Consider the invoice settled when the payment transaction …")]

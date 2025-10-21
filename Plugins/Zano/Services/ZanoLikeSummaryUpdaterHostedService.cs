@@ -3,12 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using BTCPayServer.Logging;
-using BTCPayServer.Plugins.Zano.Configuration;
+using Zano.Configuration;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace BTCPayServer.Plugins.Zano.Services
+namespace Zano.Services
 {
     public class ZanoLikeSummaryUpdaterHostedService : IHostedService
     {

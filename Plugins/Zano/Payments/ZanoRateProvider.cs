@@ -5,15 +5,16 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BTCPayServer.Rating;
+using BTCPayServer.Services.Rates;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
-namespace BTCPayServer.Services.Rates
+namespace Zano.Payments
 {
     public class ZanoRateProvider : IRateProvider
     {
         public const string ZanoProviderName = "zano";
-        
+
         private readonly HttpClient _httpClient;
         private readonly ILogger<ZanoRateProvider> _logger;
 
@@ -77,13 +78,15 @@ namespace BTCPayServer.Services.Rates
             {
                 using var response = await GetWithBackoffAsync("simple/price?ids=zano&vs_currencies=usd,btc,eur,gbp,jpy,cad,aud,chf", cancellationToken);
                 response.EnsureSuccessStatusCode();
-                
+
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
                 var jobj = JObject.Parse(json);
-                
+
                 var zanoData = jobj["zano"] as JObject;
                 if (zanoData == null)
+                {
                     return Array.Empty<PairRate>();
+                }
 
                 var rates = new List<PairRate>();
 
@@ -111,13 +114,15 @@ namespace BTCPayServer.Services.Rates
             {
                 using var response = await _httpClient.GetAsync("https://api.yadio.io/exrates/ZANO", cancellationToken);
                 response.EnsureSuccessStatusCode();
-                
+
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
                 var jobj = JObject.Parse(json);
-                
+
                 var zanoData = jobj["ZANO"] as JObject;
                 if (zanoData == null)
+                {
                     return Array.Empty<PairRate>();
+                }
 
                 var rates = new List<PairRate>();
 
@@ -145,13 +150,15 @@ namespace BTCPayServer.Services.Rates
                 // Try alternative CoinGecko endpoint for more comprehensive data
                 using var response = await GetWithBackoffAsync("coins/zano/market_chart?vs_currency=usd&days=1&interval=daily", cancellationToken);
                 response.EnsureSuccessStatusCode();
-                
+
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
                 var jobj = JObject.Parse(json);
-                
+
                 var prices = jobj["prices"] as JArray;
                 if (prices == null || !prices.Any())
+                {
                     return Array.Empty<PairRate>();
+                }
 
                 // Get the latest price (last element in the array)
                 var latestPrice = prices.Last();
@@ -189,4 +196,4 @@ retry:
             return resp;
         }
     }
-} 
+}

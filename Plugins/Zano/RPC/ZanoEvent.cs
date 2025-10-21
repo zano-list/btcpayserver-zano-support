@@ -1,5 +1,5 @@
 using System.Linq;
-namespace BTCPayServer.Plugins.Zano.RPC
+namespace Zano.RPC
 {
     public class ZanoEvent
     {

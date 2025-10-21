@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using Newtonsoft.Json;
 
-namespace BTCPayServer.Plugins.Zano.RPC.Models
+namespace Zano.RPC.Models
 {
     /// <summary>
     /// Custom JSON converter that handles parsing string values to long integers.

@@ -5,7 +5,7 @@ using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Client.Models;
 using BTCPayServer.Payments;
 
-namespace BTCPayServer.Plugins.Zano.Services
+namespace Zano.Services
 {
     public class ZanoSyncSummaryProvider : ISyncSummaryProvider
     {

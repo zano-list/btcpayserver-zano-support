@@ -6,16 +6,17 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using BTCPayServer.Plugins.Zano.Configuration;
-using BTCPayServer.Plugins.Zano.RPC;
-using BTCPayServer.Plugins.Zano.RPC.Models;
+using Zano.Configuration;
+using Zano.RPC;
+using Zano.RPC.Models;
 using BTCPayServer.Services;
 
 using Microsoft.Extensions.Logging;
 
 using NBitcoin;
+using BTCPayServer;
 
-namespace BTCPayServer.Plugins.Zano.Services
+namespace Zano.Services
 {
     public class ZanoRPCProvider
     {

@@ -6,7 +6,7 @@ using BTCPayServer.Services.Invoices;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace BTCPayServer.Plugins.Zano.Payments
+namespace Zano.Payments
 {
     public class ZanoPaymentLinkExtension : IPaymentLinkExtension
     {

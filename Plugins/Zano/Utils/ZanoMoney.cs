@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace BTCPayServer.Plugins.Zano.Utils
+namespace Zano.Utils
 {
     public static class ZanoMoney
     {

@@ -1,4 +1,6 @@
-namespace BTCPayServer.Plugins.Zano;
+using BTCPayServer;
+
+namespace Zano;
 
 public class ZanoLikeSpecificBtcPayNetwork : BTCPayNetworkBase
 {

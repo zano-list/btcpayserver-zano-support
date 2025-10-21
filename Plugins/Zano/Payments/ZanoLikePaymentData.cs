@@ -1,4 +1,4 @@
-namespace BTCPayServer.Plugins.Zano.Payments
+namespace Zano.Payments
 {
     public class ZanoLikePaymentData
     {

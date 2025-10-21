@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BTCPayServer.Plugins.Zano.Configuration
+namespace Zano.Configuration
 {
     public class ZanoLikeConfiguration
     {
@@ -16,5 +16,6 @@ namespace BTCPayServer.Plugins.Zano.Configuration
         public string Username { get; set; }
         public string Password { get; set; }
         public Uri CashCowWalletRpcUri { get; set; }
+        public bool IsConfigured { get; internal set; }
     }
 }

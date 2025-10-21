@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using BTCPayServer;
 using BTCPayServer.Payments;
 using BTCPayServer.Payments.Bitcoin;
-using BTCPayServer.Plugins.Zano.Services;
 using BTCPayServer.Services.Invoices;
 
-namespace BTCPayServer.Plugins.Zano.Payments
+using Zano.Services;
+
+namespace Zano.Payments
 {
     public class ZanoCheckoutModelExtension : ICheckoutModelExtension
     {
@@ -32,7 +34,7 @@ namespace BTCPayServer.Plugins.Zano.Payments
 
         public void ModifyCheckoutModel(CheckoutModelContext context)
         {
-            if (context is not { Handler: ZanoLikePaymentMethodHandler handler })
+            if (context is not { Handler: ZanoLikePaymentHandler handler })
             {
                 return;
             }

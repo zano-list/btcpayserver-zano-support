@@ -1,7 +1,7 @@
 @using System.Globalization
-@using BTCPayServer.Plugins.Zano.Payments
-@using BTCPayServer.Plugins.Zano.Services
-@using BTCPayServer.Plugins.Zano.ViewModels
+@using Zano.Payments
+@using Zano.Services
+@using Zano.ViewModels
 @using BTCPayServer.Services
 @using BTCPayServer.Services.Invoices
 @inject DisplayFormatter DisplayFormatter
@@ -12,7 +12,7 @@
 @{
 	var payments = Model.Payments.Select(payment =>
 	{
-		if (!handlers.TryGetValue(payment.PaymentMethodId, out var h) || h is not ZanoLikePaymentMethodHandler handler)
+        if (!handlers.TryGetValue(payment.PaymentMethodId, out var h) || h is not ZanoLikePaymentHandler handler)
 			return null;
         var m = new ZanoPaymentViewModel();
 		var onChainPaymentData = handler.ParsePaymentDetails(payment.Details);

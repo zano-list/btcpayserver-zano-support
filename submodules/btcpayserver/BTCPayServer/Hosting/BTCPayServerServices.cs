@@ -605,7 +605,6 @@ o.GetRequiredService<IEnumerable<IPaymentLinkExtension>>().ToDictionary(o => o.P
             services.AddRateProvider<BitmyntRateProvider>();
             services.AddRateProvider<BareBitcoinRateProvider>();
             services.AddRateProvider<CoinmateRateProvider>();
-            services.AddRateProvider<ZanoRateProvider>();
 
             services.AddSingleton<InvoiceBlobMigratorHostedService>();
             services.AddSingleton<IHostedService, InvoiceBlobMigratorHostedService>(o => o.GetRequiredService<InvoiceBlobMigratorHostedService>());

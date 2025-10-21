@@ -1,8 +1,9 @@
-using BTCPayServer.Plugins.Zano.RPC;
+using Zano.RPC;
 
 using Microsoft.AspNetCore.Mvc;
+using BTCPayServer;
 
-namespace BTCPayServer.Plugins.Zano.Controllers
+namespace Zano.Controllers
 {
     [Route("[controller]")]
     public class ZanoLikeDaemonCallbackController : Controller

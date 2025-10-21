@@ -12,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Zano.Payments
 {
-    public class ZanoLikePaymentMethodHandler : IPaymentMethodHandler
+    public class ZanoLikePaymentHandler : IPaymentMethodHandler
     {
         private readonly ZanoLikeSpecificBtcPayNetwork _network;
         public ZanoLikeSpecificBtcPayNetwork Network => _network;
@@ -21,7 +21,7 @@ namespace Zano.Payments
 
         public PaymentMethodId PaymentMethodId { get; }
 
-        public ZanoLikePaymentMethodHandler(ZanoLikeSpecificBtcPayNetwork network, ZanoRPCProvider zanoRpcProvider)
+        public ZanoLikePaymentHandler(ZanoLikeSpecificBtcPayNetwork network, ZanoRPCProvider zanoRpcProvider)
         {
             PaymentMethodId = PaymentTypes.CHAIN.GetPaymentMethodId(network.CryptoCode);
             _network = network;
@@ -45,7 +45,7 @@ namespace Zano.Payments
                     {
                         GetFeeRate = daemonClient.SendCommandAsync<GetFeeEstimateRequest, GetFeeEstimateResponse>("getinfo", new GetFeeEstimateRequest()),
                         ReserveAddress = s => walletClient.SendCommandAsync<CreateAddressRequest, CreateAddressResponse>("make_integrated_address", new() { Label = $"btcpay invoice #{s}", AccountIndex = supportedPaymentMethod.AccountAddress }),
-                        AccountAddress = supportedPaymentMethod.AccountAddress.ToString()
+                        AccountAddress = supportedPaymentMethod.AccountAddress
                     };
                 }
                 catch (Exception ex)
@@ -75,7 +75,7 @@ namespace Zano.Payments
             var feeRatePerByte = feeRatePerKb.DefaultFee / 1024;
             var details = new ZanoLikeOnChainPaymentMethodDetails()
             {
-                AccountAddres = Convert.ToUInt32(zanoPrepare.AccountAddress),
+                AccountAddres = zanoPrepare.AccountAddress,
                // AccountAddres = address.Address,
                 InvoiceSettledConfirmationThreshold = ParsePaymentMethodConfig(context.PaymentMethodConfig).InvoiceSettledConfirmationThreshold
             };
@@ -86,7 +86,7 @@ namespace Zano.Payments
         }
         private ZanoPaymentPromptDetails ParsePaymentMethodConfig(JToken config)
         {
-            return config.ToObject<ZanoPaymentPromptDetails>(Serializer) ?? throw new FormatException($"Invalid {nameof(ZanoLikePaymentMethodHandler)}");
+            return config.ToObject<ZanoPaymentPromptDetails>(Serializer) ?? throw new FormatException($"Invalid {nameof(ZanoLikePaymentHandler)}");
         }
         object IPaymentMethodHandler.ParsePaymentMethodConfig(JToken config)
         {
@@ -98,7 +98,7 @@ namespace Zano.Payments
             public Task<GetFeeEstimateResponse> GetFeeRate;
             public Func<string, Task<CreateAddressResponse>> ReserveAddress;
 
-            public string AccountAddress { get; internal set; }
+            public long AccountAddress { get; internal set; }
         }
 
         public ZanoLikeOnChainPaymentMethodDetails ParsePaymentPromptDetails(JToken details)
@@ -112,7 +112,7 @@ namespace Zano.Payments
 
         public ZanoLikePaymentData ParsePaymentDetails(JToken details)
         {
-            return details.ToObject<ZanoLikePaymentData>(Serializer) ?? throw new FormatException($"Invalid {nameof(ZanoLikePaymentMethodHandler)}");
+            return details.ToObject<ZanoLikePaymentData>(Serializer) ?? throw new FormatException($"Invalid {nameof(ZanoLikePaymentHandler)}");
         }
         object IPaymentMethodHandler.ParsePaymentDetails(JToken details)
         {

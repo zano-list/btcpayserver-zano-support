@@ -1,10 +1,10 @@
 ﻿using System.Threading.Tasks;
 
 using BTCPayServer.Payments;
-using BTCPayServer.Plugins.Zano.RPC;
-using BTCPayServer.Plugins.Zano.RPC.Models;
+using Zano.RPC;
+using Zano.RPC.Models;
 
-namespace BTCPayServer.Plugins.Zano.Services;
+namespace Zano.Services;
 
 public class ZanoCheckoutCheatModeExtension : ICheckoutCheatModeExtension
 {

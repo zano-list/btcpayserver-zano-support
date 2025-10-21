@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace BTCPayServer.Plugins.Zano.RPC
+namespace Zano.RPC
 {
     public class JsonRpcClient
     {
