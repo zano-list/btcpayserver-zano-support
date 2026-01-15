@@ -180,7 +180,7 @@ To include Zano in your BTCPay deployment, you must add the Zano configuration t
 ```bash
 cd /opt/app/btcpayserver-docker/docker-compose-generator/docker-fragments
 ```
-Upload zano.yml to docker-fragments
+Upload <a href="https://github.com/zano-list/btcpayserver-zano-support/blob/plugin/zano.yml">zano.yml</a> to docker-fragments
 <img width="940" height="132" alt="image" src="https://github.com/user-attachments/assets/9283c60a-79bc-4ae8-9e16-1e9a6900e597" />
 
 Go to /opt/app/btcpay_datadir
@@ -190,7 +190,7 @@ Make a new folder “ZanoWallet”
 ```bash
 mkdir "ZanoWallet"
 ```
-Upload “start-zano-wallet.sh” to ZanoWallet folder
+Upload  <a href="https://github.com/zano-list/btcpayserver-zano-support/blob/plugin/start-zano-wallet.sh">start-zano-wallet.sh</a> to ZanoWallet folder
 
 Users can install Zano by configuring the `BTCPAYGEN_CRYPTOX` and `BTCPAYGEN_ADDITIONAL_FRAGMENTS` environment variables.
 
