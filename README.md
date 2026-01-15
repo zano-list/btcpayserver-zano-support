@@ -176,18 +176,61 @@ BTCPay Server maintains its own deployment stack project to enable users to easi
 
 Zano nodes are defined in this Docker Compose file.
 
-The Zano images are also maintained in the dockerfile-deps repository. While using the `dockerfile-deps` for future versions of Zano Dockerfiles is optional, maintaining the Docker Compose Fragment is necessary.
+To include Zano in your BTCPay deployment, you must add the Zano configuration to your Docker compose generator:
+```bash
+cd /opt/app/btcpayserver-docker/docker-compose-generator/docker-fragments
+```
+Upload zano.yml to docker-fragments
+<img width="940" height="132" alt="image" src="https://github.com/user-attachments/assets/9283c60a-79bc-4ae8-9e16-1e9a6900e597" />
 
-Users can install Zano by configuring the `BTCPAYGEN_CRYPTOX` environment variables.
+Go to /opt/app/btcpay_datadir
+
+Make a new folder “ZanoWallet”
+
+```bash
+mkdir "ZanoWallet"
+```
+Upload “start-zano-wallet.sh” to ZanoWallet folder
+
+Users can install Zano by configuring the `BTCPAYGEN_CRYPTOX` and `BTCPAYGEN_ADDITIONAL_FRAGMENTS` environment variables.
 
 For example, after ensuring `BTCPAYGEN_CRYPTO2` is not already assigned to another cryptocurrency:
 
 ```bash
 BTCPAYGEN_CRYPTO2="zano"
-. btcpay-setup.sh -i
+BTCPAYGEN_ADDITIONAL_FRAGMENTS=zano.yml
 ```
+Execute command “. btcpay-setup.sh -i”
+<img width="940" height="598" alt="image" src="https://github.com/user-attachments/assets/8054000c-ab73-43f7-aae8-8d5fcaf36cbf" />
 
 This will automatically configure Zano in their deployment stack. Users can then run `btcpay-update.sh` to pull updates for the infrastructure.
+
+<img width="940" height="564" alt="image" src="https://github.com/user-attachments/assets/2cf3cfc4-ac69-4d8b-9f32-746853b60b5d" />
+
+After `btcpay-update.sh` execute the following command
+
+```bash
+docker compose -f Generated/docker-compose.generated.yml up -d zano-wallet-rpc
+```
+At this time all the required containers should be up and running.
+
+Go to UI interface 
+<img width="940" height="685" alt="image" src="https://github.com/user-attachments/assets/4eb0f53f-ac23-417c-a1ad-957808cb4eeb" />
+
+Search for Zano and install the plugin
+<img width="940" height="697" alt="image" src="https://github.com/user-attachments/assets/fcf2a18a-2992-43d4-afaf-f7008418a448" />
+
+After restarting, you should see
+<img width="940" height="430" alt="image" src="https://github.com/user-attachments/assets/d71fde56-1b93-426b-a0ed-f9c8c29a03f6" />
+
+Go to “zano” menu after “settings” and click “modify”
+<img width="940" height="255" alt="image" src="https://github.com/user-attachments/assets/f137ca1a-47cf-4755-89ac-13edea52c17e" />
+
+Set the auditable wallet address and password
+<img width="939" height="737" alt="image" src="https://github.com/user-attachments/assets/29e908d0-7a92-4b96-8956-15b36eb60899" />
+
+Upon successful setting, you should see 
+<img width="1061" height="548" alt="image" src="https://github.com/user-attachments/assets/67cb94fd-124a-44bf-8783-8a7bb6b01734" />
 
 **Note**: Adding Zano to the infrastructure is not recommended for non-advanced users. If the server specifications are insufficient, it may become unresponsive.
 
