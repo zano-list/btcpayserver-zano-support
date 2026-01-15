@@ -24,8 +24,8 @@
             <a class="nav-link @(isActive? "active" : "")"
                asp-route-cryptoCode="@item.CryptoCode"
                asp-route-storeId="@storeId"
-               asp-action="Settings"
-               asp-controller="UIServerZano">
+               asp-action="GetStoreZanoLikePaymentMethod"
+               asp-controller="UIZanoLikeStore">
                 <span class="me-2 btcpay-status btcpay-status--@(item.Enabled ? "enabled" : "pending")"></span>
                 <span>@item.CryptoCode Wallet</span>
             </a>

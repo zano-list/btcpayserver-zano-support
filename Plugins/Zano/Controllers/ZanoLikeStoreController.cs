@@ -1,29 +1,29 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-
+using BTCPayServer;
 using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Abstractions.Extensions;
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Client;
 using BTCPayServer.Data;
 using BTCPayServer.Payments;
-using Zano.Configuration;
-using Zano.Payments;
-using Zano.RPC.Models;
-using Zano.Services;
 using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
-
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Localization;
-using BTCPayServer;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Zano.Configuration;
+using Zano.Payments;
+using Zano.RPC.Models;
+using Zano.Services;
 
 namespace Zano.Controllers
 {
@@ -37,18 +37,21 @@ namespace Zano.Controllers
         private readonly StoreRepository _StoreRepository;
         private readonly ZanoRPCProvider _ZanoRpcProvider;
         private readonly PaymentMethodHandlerDictionary _handlers;
+        private readonly IWebHostEnvironment _env;
         private IStringLocalizer StringLocalizer { get; }
 
         public UIZanoLikeStoreController(ZanoLikeConfiguration zanoLikeConfiguration,
             StoreRepository storeRepository, ZanoRPCProvider zanoRpcProvider,
             PaymentMethodHandlerDictionary handlers,
-            IStringLocalizer stringLocalizer)
+            IStringLocalizer stringLocalizer,
+            IWebHostEnvironment env)
         {
             _zanoLikeConfiguration = zanoLikeConfiguration;
             _StoreRepository = storeRepository;
             _ZanoRpcProvider = zanoRpcProvider;
             _handlers = handlers;
             StringLocalizer = stringLocalizer;
+            _env = env;
         }
 
         public StoreData StoreData => HttpContext.GetStoreData();
@@ -177,21 +180,41 @@ namespace Zano.Controllers
                 var valid = true;
                 if (viewModel.PrimaryAddress == null)
                 {
-                    ModelState.AddModelError(nameof(viewModel.PrimaryAddress), StringLocalizer["Please set your primary public address"]);
+                    ModelState.AddModelError(nameof(viewModel.PrimaryAddress), StringLocalizer["Please set your auditable wallet address"]);
                     valid = false;
                 }
-                if (viewModel.PrivateViewKey == null)
-                {
-                    ModelState.AddModelError(nameof(viewModel.PrivateViewKey), StringLocalizer["Please set your private view key"]);
-                    valid = false;
-                }
-                if (configurationItem.WalletDirectory == null)
-                {
-                    ModelState.AddModelError(nameof(viewModel.PrimaryAddress), StringLocalizer["This installation doesn't support wallet creation (BTCPAY_XMR_WALLET_DAEMON_WALLETDIR is not set)"]);
-                    valid = false;
-                }
+                //if (viewModel.PrivateViewKey == null)
+                //{
+                //    ModelState.AddModelError(nameof(viewModel.PrivateViewKey), StringLocalizer["Please set your private view key"]);
+                //    valid = false;
+                //}
+                //if (configurationItem.WalletDirectory == null)
+                //{
+                //    ModelState.AddModelError(nameof(viewModel.PrimaryAddress), StringLocalizer["This installation doesn't support wallet creation (BTCPAY_XMR_WALLET_DAEMON_WALLETDIR is not set)"]);
+                //    valid = false;
+                //}
+
+                //14-Jan-2025 No longer taking wallet we will be accepting auditable wallet address
+                //if (viewModel.walletFile == null || viewModel.walletFile.Length == 0)
+                //{
+                //    return BadRequest("No wallet file uploaded.");
+                //}
+
+                
                 if (valid)
                 {
+                    var walletDir = Path.Combine(_env.ContentRootPath + "\\datadir", "ZanoWallet");
+                    Directory.CreateDirectory(walletDir);
+
+                    // 2. Define the paths for the new text files
+                    var seedPath = Path.Combine(walletDir, "seed.txt");
+                    var passwordPath = Path.Combine(walletDir, "password.txt");
+
+                    // 3. Write the viewModel strings to the files
+                    // We use WriteAllTextAsync to overwrite/create these files with the new data
+                    await System.IO.File.WriteAllTextAsync(seedPath, viewModel.PrimaryAddress);
+                    await System.IO.File.WriteAllTextAsync(passwordPath, viewModel.WalletPassword);
+
                     if (_ZanoRpcProvider.Summaries.TryGetValue(cryptoCode, out var summary))
                     {
                         if (summary.WalletAvailable)
@@ -354,7 +377,7 @@ namespace Zano.Controllers
             var blob = storeData.GetStoreBlob();
             storeData.SetPaymentMethodConfig(_handlers[PaymentTypes.CHAIN.GetPaymentMethodId(cryptoCode)], new ZanoPaymentPromptDetails()
             {
-                AccountAddress = viewModel.AccountIndex,
+                AccountIndex = viewModel.AccountIndex,
                 InvoiceSettledConfirmationThreshold = viewModel.SettlementConfirmationThresholdChoice switch
                 {
                     ZanoLikeSettlementThresholdChoice.ZeroConfirmation => 0,

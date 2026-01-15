@@ -44,8 +44,8 @@ namespace Zano.Payments
                     context.State = new Prepare()
                     {
                         GetFeeRate = daemonClient.SendCommandAsync<GetFeeEstimateRequest, GetFeeEstimateResponse>("getinfo", new GetFeeEstimateRequest()),
-                        ReserveAddress = s => walletClient.SendCommandAsync<CreateAddressRequest, CreateAddressResponse>("make_integrated_address", new() { Label = $"btcpay invoice #{s}", AccountIndex = supportedPaymentMethod.AccountAddress }),
-                        AccountAddress = supportedPaymentMethod.AccountAddress.ToString()
+                        ReserveAddress = s => walletClient.SendCommandAsync<CreateAddressRequest, CreateAddressResponse>("make_integrated_address", new() { Label = $"btcpay invoice #{s}", AccountIndex = supportedPaymentMethod.AccountIndex }),
+                        AccountAddress = supportedPaymentMethod.AccountIndex.ToString()
                     };
                 }
                 catch (Exception ex)
@@ -75,7 +75,7 @@ namespace Zano.Payments
             var feeRatePerByte = feeRatePerKb.DefaultFee / 1024;
             var details = new ZanoLikeOnChainPaymentMethodDetails()
             {
-                AccountAddres = Convert.ToUInt32(zanoPrepare.AccountAddress),
+                AccountIndex = Convert.ToUInt32(zanoPrepare.AccountAddress),
                // AccountAddres = address.Address,
                 InvoiceSettledConfirmationThreshold = ParsePaymentMethodConfig(context.PaymentMethodConfig).InvoiceSettledConfirmationThreshold
             };

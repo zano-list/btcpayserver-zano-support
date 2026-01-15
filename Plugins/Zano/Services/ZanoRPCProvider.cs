@@ -3,18 +3,20 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Zano.Configuration;
-using Zano.RPC;
-using Zano.RPC.Models;
+using BTCPayServer;
 using BTCPayServer.Services;
 
 using Microsoft.Extensions.Logging;
 
 using NBitcoin;
-using BTCPayServer;
+
+using Zano.Configuration;
+using Zano.RPC;
+using Zano.RPC.Models;
 
 namespace Zano.Services
 {
@@ -76,7 +78,7 @@ namespace Zano.Services
         public async Task<ZanoLikeSummary> UpdateSummary(string cryptoCode)
         {
             _logger.LogDebug($"UpdateSummary called for {cryptoCode}");
-            
+
             if (!DaemonRpcClients.TryGetValue(cryptoCode.ToUpperInvariant(), out var daemonRpcClient) ||
                 !WalletRpcClients.TryGetValue(cryptoCode.ToUpperInvariant(), out var walletRpcClient))
             {
@@ -113,11 +115,20 @@ namespace Zano.Services
                 var client = new HttpClient();
 
                 var path = _zanoLikeConfiguration.ZanoLikeConfigurationItems.ToImmutableDictionary(pair => pair.Key,
-                        pair => pair.Value.DaemonRpcUri).FirstOrDefault().Value;
-                var request = new HttpRequestMessage(HttpMethod.Get,
-                    new Uri(path, "getheight"));
-
-                var response = await client.SendAsync(request);
+                        pair => pair.Value.InternalWalletRpcUri).FirstOrDefault().Value;
+                var fullUri = new Uri(new Uri(path.ToString()), "json_rpc");
+                var jsonPayload = new
+                {
+                    jsonrpc = "2.0",
+                    id = "0",
+                    method = "get_wallet_info"
+                };
+                var content = new StringContent(
+                    JsonSerializer.Serialize(jsonPayload),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+                var response = await client.PostAsync(fullUri, content);
                 response.EnsureSuccessStatusCode();
 
                 var json = await response.Content.ReadAsStringAsync();
@@ -127,19 +138,15 @@ namespace Zano.Services
                     PropertyNameCaseInsensitive = true
                 };
 
-                var heightInfo = JsonSerializer.Deserialize<GetHeightResponse>(json, options);
+                // NOTE: You must use the correct deserialization class structure here (GetHeightResponse must match the full 'getinfo' response)
+                var heightInfo = JsonSerializer.Deserialize<ZanoRpcWrapper>(json, options);
 
-                _logger.LogDebug($"{cryptoCode} Wallet height: {heightInfo.Height}");
+                _logger.LogDebug($"{cryptoCode} Wallet height: {heightInfo?.Result?.CurrentHeight}");
 
-                summary.WalletHeight = heightInfo.Height;
+                summary.WalletHeight = heightInfo?.Result?.CurrentHeight ?? 0; 
                 summary.WalletAvailable = true;
             }
-            catch when (environment.CheatMode && !walletCreated)
-            {
-                //await CreateTestWallet(walletRpcClient);
-                //walletCreated = true;
-                //goto retry;
-            }
+           
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, $"Failed to get wallet height for {cryptoCode}");
