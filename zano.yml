@@ -1,0 +1,36 @@
+services:
+  
+  zano-daemon:
+    image: canardleteer/zano:master-zano-runner
+    container_name: zano-daemon
+    restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
+    command:
+      - --data-dir=/var/lib/zano/data
+      - --p2p-bind-port=11898
+      - --rpc-bind-port=11211
+      - --rpc-bind-ip=0.0.0.0
+      - --log-level=1
+    ports:
+      - "11898:11898"   # p2p
+      - "11211:11211"   # rpc
+    volumes: 
+    - ./zano_datadir:/var/lib/zano/data
+    
+  zano-wallet-rpc:
+    image: canardleteer/zano:master-zano-runner
+    container_name: zano-wallet-rpc
+    restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
+    environment: 
+    - USE_WALLET_BINARY=true
+    entrypoint: ["sh","/ZanoWallet/start-zano-wallet.sh"]
+    ports: 
+    - "11233:11233"  
+    depends_on: 
+    - zano-daemon 
+    volumes: 
+    - /opt/app/btcpay_datadir/ZanoWallet:/ZanoWallet
+
+volumes:
+  zano_datadir:
