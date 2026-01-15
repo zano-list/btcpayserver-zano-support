@@ -234,8 +234,6 @@ Upon successful setting, you should see
 
 **Note**: Adding Zano to the infrastructure is not recommended for non-advanced users. If the server specifications are insufficient, it may become unresponsive.
 
-Lunanode, a VPS provider, offers an easy way to provision the infrastructure for BTCPay Server, then it installs the Docker Compose deployment on the provisioned VPS. The user can select Zano during provisioning, then the resulting VPS have a Zano deployed automatically, without the need for the user to use the command line. (But the user will still need to install this plugin manually)
-
 ## Architecture
 
 ### Core Components
